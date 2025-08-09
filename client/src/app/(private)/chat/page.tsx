@@ -2,11 +2,13 @@
 
 import ChatContainer from "@/components/chat/ChatContainer";
 import { ChatProvider } from "@/providers/chat.provider";
-
+import StreamConnectionProvider from "@/providers/streamconnection.provider";
 export default function ChatPage() {
-    return (
-        <ChatProvider>
-            <ChatContainer />
-        </ChatProvider>
-    );
+  return (
+    <StreamConnectionProvider>
+      <ChatProvider>
+        <ChatContainer />
+      </ChatProvider>
+    </StreamConnectionProvider>
+  );
 }

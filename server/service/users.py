@@ -62,7 +62,7 @@ async def get_user(search: str) -> dict:
                 # user["_id"] = str(user["_id"])
 
 
-        total_items = await db.use_rs.count_documents(match_stage)
+        total_items = await db.users.count_documents(match_stage)
 
         return {
             "success": True,
