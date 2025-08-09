@@ -34,4 +34,4 @@ async def login_user(user: UserLogin) -> dict:
     if not db_user or not verify_password(user.password, db_user["password"]):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    return {"message": f"Welcome back, {user.email}!", "username": db_user["username"], "profile_pic": db_user.get("profile_pic", None), "email": db_user["email"]}
+    return {"message": f"Welcome back, {user.email}!", "id": str(db_user["_id"]), "username": db_user["username"], "profile_pic": db_user.get("profile_pic", None), "email": db_user["email"]}
