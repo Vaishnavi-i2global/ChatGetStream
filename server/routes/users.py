@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from models.users import UserSignup, UserLogin, UserResponse
-from service.users import signup_user, login_user
+from service.users import signup_user, login_user,get_user
 
 router = APIRouter()
 
@@ -11,3 +11,7 @@ async def signup(user: UserSignup):
 @router.post("/login")
 async def login(user: UserLogin):
     return await login_user(user)
+
+@router.get("/users")
+async def getusers(search:str):
+    return await get_user(search)

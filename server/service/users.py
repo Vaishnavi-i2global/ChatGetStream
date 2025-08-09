@@ -35,3 +35,49 @@ async def login_user(user: UserLogin) -> dict:
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     return {"message": f"Welcome back, {user.email}!", "id": str(db_user["_id"]), "username": db_user["username"], "profile_pic": db_user.get("profile_pic", None), "email": db_user["email"]}
+
+
+async def get_user(search: str) -> dict:
+    try:
+        # Match filter
+        match_stage = {}
+        if search:
+            match_stage["$or"] = [
+                {"username": {"$regex": str(search), "$options": "i"}},
+            ]
+
+        # Query Mongo
+        pipeline = [
+            {"$match": match_stage},
+        ]
+
+        cursor = db.users.aggregate(pipeline)  # no await here
+        users = await cursor.to_list(length=None)
+        
+        # Convert ObjectId to string for JSON serialization
+        for user in users:
+            if "_id" in user:
+                user["id"] = str(user["_id"])
+                del user["_id"] 
+                # user["_id"] = str(user["_id"])
+
+
+        total_items = await db.use_rs.count_documents(match_stage)
+
+        return {
+            "success": True,
+            "message": "Users retrieved successfully",
+            "data": users,
+            "total_items": total_items
+        }
+
+    except HTTPException as e:
+        raise HTTPException(
+            status_code=e.status_code,
+            detail=f"Failed to retrieve users: {e.detail}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve users: {str(e)}"
+        )
