@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from server.models.users import UserSignup, UserLogin, UserResponse
-from server.service.users import signup_user, login_user
+from models.users import UserSignup, UserLogin, UserResponse
+from service.users import signup_user, login_user
 
 router = APIRouter()
 

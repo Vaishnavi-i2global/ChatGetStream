@@ -1,7 +1,7 @@
 # main.py
 from fastapi import FastAPI
 from dotenv import load_dotenv
-from server.routes import (users)  # Import users
+from routes import (users)  # Import users
 load_dotenv()
 
 app = FastAPI()
