@@ -2,10 +2,24 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
 from routes import (users)  # Import users
+from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 
 app = FastAPI()
 
+origins = [
+    "http://localhost:3000",  # React frontend
+    "http://127.0.0.1:3000",
+    "*"  # Allow all (only for testing, not recommended in prod)
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],    
+)
 # Register users router
 app.include_router(users.router, prefix="/users", tags=["users"])
 
