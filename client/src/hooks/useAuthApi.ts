@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { User } from "../providers/auth.provider";
+import axios from "axios";
 
 // Mock API functions for authentication
 // In a real app, these would make actual API calls
@@ -17,47 +18,14 @@ interface SignupCredentials {
     password: string;
 }
 
-// Mock API functions
-const mockLoginApi = async (credentials: LoginCredentials): Promise<User> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Simulate validation
-    if (!credentials.email || !credentials.password) {
-        throw new Error("Email and password are required");
-    }
-
-    // Return mock user data
-    return {
-        id: "user-" + Math.random().toString(36).substr(2, 9),
-        email: credentials.email,
-        username: credentials.email.split("@")[0],
-    };
-};
-
-const mockSignupApi = async (credentials: SignupCredentials): Promise<User> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Simulate validation
-    if (!credentials.email || !credentials.username || !credentials.password) {
-        throw new Error("All fields are required");
-    }
-
-    // Return mock user data
-    return {
-        id: "user-" + Math.random().toString(36).substr(2, 9),
-        email: credentials.email,
-        username: credentials.username,
-    };
-};
-
 // Custom hooks for authentication API calls
 export function useLoginMutation() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: mockLoginApi,
+        mutationFn: (credentials: LoginCredentials) => {
+            return axios.post(`${process.env.NEXT_PUBLIC_API_URL}/users/login`, credentials);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["user"] });
         },
@@ -68,7 +36,9 @@ export function useSignupMutation() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: mockSignupApi,
+        mutationFn: (credentials: SignupCredentials) => {
+            return axios.post(`${process.env.NEXT_PUBLIC_API_URL}/users/signup`, credentials);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["user"] });
         },

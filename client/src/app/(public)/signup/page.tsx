@@ -40,7 +40,10 @@ export default function SignupPage() {
                     </p>
                 </div>
 
-                <form className="mt-8 space-y-6" onSubmit={() => { signup(email, username, password) }}>
+                <form className="mt-8 space-y-6" onSubmit={(e) => {
+                    e.preventDefault();
+                    signup(email, username, password)
+                }}>
                     <div className="rounded-md shadow-sm -space-y-px">
                         <div>
                             <label htmlFor="email" className="sr-only">
