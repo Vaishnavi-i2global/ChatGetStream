@@ -1,7 +1,7 @@
 from fastapi import HTTPException
-from db import db
+from server.database import db
 from passlib.context import CryptContext
-from models.users import UserSignup, UserLogin, UserResponse
+from server.models.users import UserSignup, UserLogin, UserResponse
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -28,6 +28,9 @@ async def signup_user(user: UserSignup) -> UserResponse:
 
 async def login_user(user: UserLogin) -> dict:
     db_user = await db.users.find_one({"username": user.username})
+    print(db_user)
+    if not db_user:
+        raise HTTPException(status_code=401, detail="no connection to the database or user not found")
     if not db_user or not verify_password(user.password, db_user["password"]):
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
