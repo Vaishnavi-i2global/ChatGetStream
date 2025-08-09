@@ -35,7 +35,10 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={() => { login(email, password) }}>
+        <form className="mt-8 space-y-6" onSubmit={(e) => {
+          e.preventDefault();
+          login(email, password)
+        }}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="email" className="sr-only">
