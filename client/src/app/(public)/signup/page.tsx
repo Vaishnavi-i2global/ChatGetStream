@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/providers/auth.provider";
-import { useSignupMutation } from "@/hooks/useAuthApi";
 import { useToast } from "@/providers/toast.provider";
 import Image from "next/image";
 
