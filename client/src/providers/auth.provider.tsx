@@ -48,6 +48,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
         try {
             const response = await loginMutation.mutateAsync({ email, password });
             setUser(response.data);
+            localStorage.setItem("user", JSON.stringify(response.data));
             router.push("/dashboard");
         } catch (error: any) {
             console.log("Login failed:", error.response.data.detail);
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
         try {
             const response = await signupMutation.mutateAsync({ email, username, password });
             setUser(response.data as User);
+            localStorage.setItem("user", JSON.stringify(response.data));
             router.push("/dashboard"); // Redirect to dashboard after signup
         } catch (error) {
             console.error("Signup failed:", error);
