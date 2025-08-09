@@ -14,7 +14,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
     useEffect(() => {
         if (!isLoading && !user) {
-            router.push("/n");
+            router.push("/");
         }
     }, [user, isLoading, router]);
 

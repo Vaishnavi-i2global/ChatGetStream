@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/providers/auth.provider";
-import { useLoginMutation } from "@/hooks/useAuthApi";
 import Image from "next/image";
 
 export default function LoginPage() {

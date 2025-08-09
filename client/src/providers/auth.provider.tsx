@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSignupMutation } from "@/hooks/useAuthApi";
 import { useLoginMutation } from "@/hooks/useAuthApi";
-
+import { useToast } from "@/providers/toast.provider";
 // Define user type
 export interface User {
     id?: string;
@@ -31,6 +31,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
     const router = useRouter();
     const signupMutation = useSignupMutation();
     const loginMutation = useLoginMutation();
+    const { showToast } = useToast();
 
     // Check if user is logged in on initial load
     useEffect(() => {
@@ -46,11 +47,11 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
         setIsLoading(true);
         try {
             const response = await loginMutation.mutateAsync({ email, password });
-            console.log(response, "asdf");
             setUser(response.data);
-            router.push("/dashboard"); // Redirect to dashboard after login
-        } catch (error) {
-            console.error("Login failed:", error);
+            router.push("/dashboard");
+        } catch (error: any) {
+            console.log("Login failed:", error.response.data.detail);
+            showToast(error.response.data.detail || "Login failed", "error");
             throw error;
         } finally {
             setIsLoading(false);
