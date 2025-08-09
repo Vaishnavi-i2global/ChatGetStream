@@ -8,7 +8,7 @@ class UserSignup(BaseModel):
     profile_pic: Optional[str] = None  # URL of profile image
 
 class UserLogin(BaseModel):
-    username: str
+    email: str
     password: str
 
 class UserResponse(BaseModel):
