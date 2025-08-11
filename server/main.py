@@ -1,7 +1,7 @@
 # main.py
 from fastapi import FastAPI
 from dotenv import load_dotenv
-from routes import (users,chat)  # Import users
+from routes import (users,chat,channel)  # Import users
 from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 
@@ -23,6 +23,7 @@ app.add_middleware(
 # Register users router
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(chat.router, prefix="/chat", tags=["chat"])
+app.include_router(channel.router, prefix="/channel", tags=["channel"])
 
 @app.get("/")
 def home():
