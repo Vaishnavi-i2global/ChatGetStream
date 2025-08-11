@@ -10,7 +10,7 @@ export const useStreamConnectionApi = (user: User) => {
       axios.post(`${process.env.NEXT_PUBLIC_API_URL}/chat/stream_connection`, {
         user_id: user.id,
         name: user.username,
-        image: user.email,
+        image: "message",
       }),
     staleTime: 60 * 1000
   });

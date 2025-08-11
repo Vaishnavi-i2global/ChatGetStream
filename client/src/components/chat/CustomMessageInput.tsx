@@ -1,41 +1,51 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import {
-    useChannelStateContext,
-    useChannelActionContext
-} from "stream-chat-react";
-import { Smile, Paperclip, Send, X, Image as ImageIcon, FileText } from "lucide-react";
-import data from '@emoji-mart/data';
-import Picker from '@emoji-mart/react';
+import React, { useState, useRef, KeyboardEvent } from "react";
+import { useChannelStateContext } from "stream-chat-react";
+import { Send, Smile, Paperclip, X, Image as ImageIcon, File } from "lucide-react";
 
 const CustomMessageInput = () => {
     const [text, setText] = useState("");
-    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-    const [imageUploads, setImageUploads] = useState<Array<{ id: string; file: File; url?: string }>>([]);
-    const [fileUploads, setFileUploads] = useState<Array<{ id: string; file: File }>>([]);
-
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const emojiPickerRef = useRef<HTMLDivElement>(null);
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-
+    const [fileUploads, setFileUploads] = useState<Array<{ id: string; file: File; preview?: string }>>([]);
     const { channel } = useChannelStateContext();
-    const { sendMessage } = useChannelActionContext();
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Handle emoji selection
-    const handleEmojiSelect = (emoji: any) => {
-        const cursorPosition = textareaRef.current?.selectionStart || 0;
-        const textBeforeCursor = text.slice(0, cursorPosition);
-        const textAfterCursor = text.slice(cursorPosition);
+    // Handle text changes
+    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setText(e.target.value);
+    };
 
-        setText(`${textBeforeCursor}${emoji.native}${textAfterCursor}`);
-        setShowEmojiPicker(false);
+    // Handle key down events - Enter to submit, Shift+Enter for new line
+    const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Enter') {
+            if (!e.shiftKey) {
+                e.preventDefault(); // Prevent default to avoid adding a new line
+                handleSubmit(e as any);
+            }
+            // If Shift+Enter, let the default behavior happen (add a new line)
+        }
     };
 
     // Handle file input change
     const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // For now, we'll disable file uploads until we resolve the error
-        alert("File uploads are temporarily disabled. Please use text messages only.");
+        if (!e.target.files?.length) return;
+
+        const files = Array.from(e.target.files);
+
+        // Create new file uploads with previews for images
+        const newUploads = files.map(file => {
+            const id = `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+            const isImage = file.type.startsWith('image/');
+
+            return {
+                id,
+                file,
+                preview: isImage ? URL.createObjectURL(file) : undefined
+            };
+        });
+
+        setFileUploads(prev => [...prev, ...newUploads]);
 
         // Reset the input
         if (fileInputRef.current) {
@@ -43,95 +53,83 @@ const CustomMessageInput = () => {
         }
     };
 
-    // Remove an image upload
-    const removeImage = (id: string) => {
-        setImageUploads(prev => prev.filter(image => image.id !== id));
-    };
-
     // Remove a file upload
     const removeFile = (id: string) => {
-        setFileUploads(prev => prev.filter(file => file.id !== id));
+        setFileUploads(prev => {
+            const fileToRemove = prev.find(file => file.id === id);
+
+            // Revoke object URL if it's an image preview
+            if (fileToRemove?.preview) {
+                URL.revokeObjectURL(fileToRemove.preview);
+            }
+
+            return prev.filter(file => file.id !== id);
+        });
     };
 
-    // Handle message submission
+    // Simple message submission
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!text.trim()) return;
+        if (!text.trim() && fileUploads.length === 0) return;
 
         try {
-            // For now, let's simplify and just send text messages
-            // We'll handle attachments separately in a future update
-            if (text.trim()) {
-                // Use any type to bypass TypeScript errors for now
-                const messageData: any = {
-                    text: text.trim(),
-                };
+            const attachments = [];
 
-                await sendMessage(messageData);
+            // Process file uploads
+            for (const upload of fileUploads) {
+                try {
+                    const isImage = upload.file.type.startsWith('image/');
+
+                    if (isImage) {
+                        // Upload image
+                        const response = await channel.sendImage(upload.file);
+
+                        attachments.push({
+                            type: 'image',
+                            image_url: response.file,
+                            fallback: upload.file.name,
+                        });
+                    } else {
+                        // Upload file
+                        const response = await channel.sendFile(upload.file);
+
+                        attachments.push({
+                            type: 'file',
+                            asset_url: response.file,
+                            title: upload.file.name,
+                            file_size: upload.file.size,
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error uploading file:', error);
+                }
             }
 
-            // Reset state
+            // Use the channel's sendMessage method directly
+            await channel.sendMessage({
+                text: text.trim(),
+                attachments: attachments.length > 0 ? attachments : undefined,
+            });
+
+            // Clear the input
             setText("");
-            setImageUploads([]);
             setFileUploads([]);
+
+            // Focus the textarea after sending
+            if (textareaRef.current) {
+                textareaRef.current.focus();
+            }
         } catch (error) {
             console.error('Error sending message:', error);
         }
-    };
-
-    // Handle text change
-    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setText(e.target.value);
-    };
-
-    // Render file upload previews
-    const renderFileUploads = () => {
-        if (!imageUploads.length && !fileUploads.length) return null;
-
-        return (
-            <div className="flex flex-wrap gap-2 mt-2 mb-2">
-                {/* Image uploads */}
-                {imageUploads.map((image, index) => (
-                    <div key={`image-${index}`} className="relative">
-                        <img
-                            src={image.url}
-                            alt={`Upload ${index + 1}`}
-                            className="h-20 w-20 object-cover rounded-md"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => removeImage(image.id)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                        >
-                            <X size={14} />
-                        </button>
-                    </div>
-                ))}
-
-                {/* File uploads */}
-                {fileUploads.map((file, index) => (
-                    <div key={`file-${index}`} className="relative flex items-center bg-gray-100 p-2 rounded-md">
-                        <FileText size={16} className="mr-2 text-gray-600" />
-                        <span className="text-sm truncate max-w-[150px]">{file.file.name}</span>
-                        <button
-                            type="button"
-                            onClick={() => removeFile(file.id)}
-                            className="ml-2 text-red-500"
-                        >
-                            <X size={14} />
-                        </button>
-                    </div>
-                ))}
-            </div>
-        );
     };
 
     // Check if users are typing
     const renderTypingIndicator = () => {
         const typing = channel?.state?.typing || {};
         const typingUsers = Object.values(typing).filter(
-            ({ user }) => user?.id !== channel?._client?.userID
+            ({ user }: any) => user?.id !== channel?._client?.userID
         );
 
         if (!typingUsers.length) return null;
@@ -147,59 +145,97 @@ const CustomMessageInput = () => {
         );
     };
 
+    // Render file previews
+    const renderFilePreviews = () => {
+        if (fileUploads.length === 0) return null;
+
+        return (
+            <div className="flex flex-wrap gap-2 mt-2 mb-2">
+                {fileUploads.map((upload) => {
+                    const isImage = upload.file.type.startsWith('image/');
+
+                    if (isImage && upload.preview) {
+                        return (
+                            <div key={upload.id} className="relative">
+                                <img
+                                    src={upload.preview}
+                                    alt={upload.file.name}
+                                    className="h-20 w-20 object-cover rounded-md"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => removeFile(upload.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <div key={upload.id} className="relative flex items-center bg-gray-100 p-2 rounded-md">
+                            <File size={16} className="mr-2 text-gray-600" />
+                            <span className="text-sm truncate max-w-[150px]">{upload.file.name}</span>
+                            <button
+                                type="button"
+                                onClick={() => removeFile(upload.id)}
+                                className="ml-2 text-red-500"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
     return (
         <div className="border-t border-gray-200 p-4">
-            {renderFileUploads()}
-
             <form onSubmit={handleSubmit} className="relative">
                 {renderTypingIndicator()}
+                {renderFilePreviews()}
 
-                <div className="flex items-center border border-gray-300 rounded-md overflow-hidden">
+                <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
                     <div className="flex items-center px-3">
                         <button
                             type="button"
-                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                             className="text-gray-500 hover:text-gray-700"
                         >
                             <Smile size={20} />
                         </button>
 
-                        <div className="relative">
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleFileInputChange}
-                                className="hidden"
-                                multiple
-                            />
-                            <button
-                                type="button"
-                                onClick={() => fileInputRef.current?.click()}
-                                className="ml-2 text-gray-500 hover:text-gray-700"
-                            >
-                                <Paperclip size={20} />
-                            </button>
-                        </div>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileInputChange}
+                            multiple
+                            className="hidden"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="ml-3 text-gray-500 hover:text-gray-700"
+                        >
+                            <Paperclip size={20} />
+                        </button>
                     </div>
 
                     <textarea
                         ref={textareaRef}
                         value={text}
                         onChange={handleChange}
+                        onKeyDown={handleKeyDown}
                         placeholder="Type a message..."
-                        className="flex-1 py-2 px-3 focus:outline-none resize-none max-h-32 min-h-[40px]"
+                        className="flex-1 py-3 px-3 focus:outline-none resize-none max-h-32 min-h-[40px] border-none"
                         rows={1}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                handleSubmit(e);
-                            }
-                        }}
                     />
 
                     <button
                         type="submit"
-                        disabled={!text.trim()}
-                        className={`bg-blue-500 text-white p-2 px-4 ${!text.trim()
+                        disabled={!text.trim() && fileUploads.length === 0}
+                        className={`bg-blue-500 text-white p-3 px-5 h-full ${!text.trim() && fileUploads.length === 0
                             ? 'opacity-50 cursor-not-allowed'
                             : 'hover:bg-blue-600'
                             }`}
@@ -207,19 +243,6 @@ const CustomMessageInput = () => {
                         <Send size={20} />
                     </button>
                 </div>
-
-                {showEmojiPicker && (
-                    <div
-                        ref={emojiPickerRef}
-                        className="absolute bottom-full mb-2 z-10"
-                    >
-                        <Picker
-                            data={data}
-                            onEmojiSelect={handleEmojiSelect}
-                            theme="light"
-                        />
-                    </div>
-                )}
             </form>
         </div>
     );

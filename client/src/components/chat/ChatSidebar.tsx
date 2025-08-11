@@ -31,6 +31,19 @@ export default function ChatSidebar({ loadedChannels }: ChannelListMessengerProp
         if (!client) return;
 
         try {
+            const exisitngUsers = await client.queryUsers({
+                id: { $eq: userId }
+            });
+            if (exisitngUsers.users.length === 0) {
+                await client.upsertUser({
+                    id: userId,
+                    name: username,
+                    role: 'user',
+                    image: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`,
+                    // email: email
+                });
+            }
+            // 
             // Create a new channel
             const channel = client.channel('messaging', {
                 members: [client.userID || '', userId],
@@ -204,7 +217,7 @@ function ChannelItem({ channel, isActive, onClick }: ChannelItemProps) {
 
     // Get the last message
     const lastMessage = channel.state.messages[channel.state.messages.length - 1];
-    const lastMessageText = lastMessage?.text || 'No messages yet';
+    const lastMessageText = lastMessage?.text || lastMessage?.attachments?.[0]?.fallback || 'No messages yet';
     const lastMessageTime = lastMessage?.created_at;
 
     // Check if there are unread messages

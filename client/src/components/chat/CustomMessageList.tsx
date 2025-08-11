@@ -3,33 +3,46 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
     useChannelStateContext,
-    MessageUIComponentProps
 } from "stream-chat-react";
 import { format } from "date-fns";
 import CustomMessage from "./CustomMessage";
 
 const CustomMessageList = () => {
-    const { messages } = useChannelStateContext();
-    console.log(messages, "messages")
+    const { messages, channel } = useChannelStateContext();
+    const [prevChannelId, setPrevChannelId] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Auto-scroll to bottom on new messages
+
+    // 1️⃣ Jump instantly when channel changes
     useEffect(() => {
+        if (channel?.id && channel.id !== prevChannelId) {
+            setPrevChannelId(channel.id);
+            if (messagesEndRef.current) {
+                messagesEndRef.current.scrollIntoView({ behavior: "auto" });
+            }
+        }
+    }, [channel?.id]);
+
+    // 2️⃣ Smooth scroll when a new message arrives
+    useEffect(() => {
+        if (!channel) return;
         if (messagesEndRef.current && messages && messages.length > 0) {
-            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+            // Don't trigger smooth scroll on channel switch
+            if (channel.id === prevChannelId) {
+                messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+            }
         }
     }, [messages?.length]);
-
     // Handle scroll to load more messages
     const handleScroll = async () => {
         const container = containerRef.current;
         if (!container || !hasMore || loadingMore) return;
 
-        const { scrollTop, scrollHeight, clientHeight } = container;
+        const { scrollTop } = container;
         const isAtTop = scrollTop < 100;
 
         if (isAtTop) {
@@ -59,7 +72,7 @@ const CustomMessageList = () => {
     const groupMessagesByDate = () => {
         if (!messages) return {};
 
-        const groups: { [key: string]: typeof messages } = {};
+        const groups: { [key: string]: any[] } = {};
 
         messages.forEach((message) => {
             if (!message.created_at) return;
@@ -102,11 +115,7 @@ const CustomMessageList = () => {
 
                         {dateMessages && dateMessages.map((message, i) => (
                             <div key={message.id || `message-${i}`}>
-                                <Message
-                                    message={message}
-                                    Message={CustomMessage}
-                                />
-                                {message.text}
+                                <CustomMessage message={message} />
                             </div>
                         ))}
                     </div>
@@ -123,11 +132,6 @@ const CustomMessageList = () => {
             <div ref={messagesEndRef} />
         </div>
     );
-};
-
-// Wrapper component to properly pass props to CustomMessage
-const Message = ({ message, Message }: { message: any; Message: React.ComponentType<MessageUIComponentProps> }) => {
-    return <Message message={message} />;
 };
 
 export default CustomMessageList;

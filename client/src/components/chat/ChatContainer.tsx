@@ -50,10 +50,9 @@ const ChatContainer = () => {
   }
 
   return (
-    <div className=" h-screen">
-      <Chat client={streamClient} theme='str-chat__theme-custom'>
-        <section data-sidebar={"close"} className="grid  gap-4 data-[sidebar=close]:md:grid-cols-[1fr_3fr] data-[sidebar=open]:md:grid-cols-[1fr_3fr_1.5fr] h-full">
-
+    <div className="h-screen">
+      <Chat client={streamClient} theme="str-chat__theme-custom">
+        <section data-sidebar={"close"} className="grid gap-4 data-[sidebar=close]:md:grid-cols-[1fr_3fr] data-[sidebar=open]:md:grid-cols-[1fr_3fr_1.5fr] h-full">
           <ChannelList
             setActiveChannelOnMount={false}
             List={ChatSidebar}
@@ -61,20 +60,22 @@ const ChatContainer = () => {
             filters={{
               members: { $in: [streamClient.userID || ''] }
             }}
-          // sort={{ last_message_at: -1 }}
-          // options={{
-          //   state: true,
-          //   watch: true,
-          //   presence: true,
-          //   limit: 10,
-          // }}
+            // sort={{ last_message_at: -1 }}
+            options={{
+              state: true,
+              watch: true,
+              presence: true,
+              limit: 10,
+            }}
           />
 
-          <Channel Message={CustomMessage}>
+          <Channel>
             <Window>
               <div className="flex flex-col justify-between h-full">
                 <CustomChannelHeader />
-                <CustomMessageList />
+                <div className="flex-1 overflow-y-auto p-4 bg-gray-50 -h-[calc(100vh-150px)] max-h-[calc(100vh-150px)]">
+                  <CustomMessageList />
+                </div>
                 <CustomMessageInput />
               </div>
             </Window>
