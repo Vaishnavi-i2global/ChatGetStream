@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import ChatWindow from "./ChatWindow";
 import ChatSidebar from "./ChatSidebar";
 import type {
   User,
@@ -11,17 +10,19 @@ import type {
 import {
   Chat,
   Channel,
-  ChannelHeader,
   ChannelList,
-  MessageInput,
-  MessageList,
-  Thread,
   Window,
 } from "stream-chat-react";
 
 import "stream-chat-react/dist/css/v2/index.css";
 import { useStreamConnection } from "@/providers/streamconnection.provider";
 import clsx from "clsx";
+
+// Import custom components
+import CustomChannelHeader from "./CustomChannelHeader";
+import CustomMessageList from "./CustomMessageList";
+import CustomMessageInput from "./CustomMessageInput";
+import CustomMessage from "./CustomMessage";
 
 const ChatContainer = () => {
   const { streamClient, isLoading, error } = useStreamConnection();
@@ -69,22 +70,14 @@ const ChatContainer = () => {
           // }}
           />
 
-          <Channel>
-
+          <Channel Message={CustomMessage}>
             <Window>
               <div className="flex flex-col justify-between h-full">
-                <ChannelHeader />
-                <div className="px-4 py-3 overflow-y-auto flex flex-col gap-4 h-full">
-                  <MessageList />
-                </div>
-
-                <MessageInput />
+                <CustomChannelHeader />
+                <CustomMessageList />
+                <CustomMessageInput />
               </div>
-
             </Window>
-
-
-            {/* <Thread /> */}
           </Channel>
           {/* <div>
             sdf
