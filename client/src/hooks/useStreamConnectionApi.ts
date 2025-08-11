@@ -12,7 +12,7 @@ export const useStreamConnectionApi = (user: User) => {
         name: user.username,
         image: user.email,
       }),
-    staleTime: 60 * 1000,
+    staleTime: 60 * 1000
   });
 
   return { data, isLoading, error };

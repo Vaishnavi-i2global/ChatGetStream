@@ -28,12 +28,11 @@ const StreamConnectionProvider = ({
   const { user } = useAuth();
   const [streamClient, setStreamClient] = useState<StreamChat | null>(null);
   const [error, setError] = useState<Error | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Only fetch token if we have a user
   const {
     data,
-    isLoading: apiLoading,
+    isLoading,
     error: apiError,
   } = useStreamConnectionApi(user as User);
 
@@ -42,27 +41,20 @@ const StreamConnectionProvider = ({
     setError(null);
 
     // Check for required data
-    if (!user || !user.id) {
-      setIsLoading(false);
-      return;
-    }
-
-    if (apiLoading) {
-      setIsLoading(true);
+    if (!user || !user.id || !data?.data?.token) {
       return;
     }
 
     if (apiError) {
       console.error("API Error:", apiError);
       setError(new Error(apiError.message));
-      setIsLoading(false);
       return;
     }
 
     if (!data?.data?.token) {
       console.error("No token received from API");
       setError(new Error("Failed to get authentication token"));
-      setIsLoading(false);
+
       return;
     }
 
@@ -71,7 +63,6 @@ const StreamConnectionProvider = ({
     if (!apiKey) {
       console.error("Stream API key is not defined");
       setError(new Error("Stream API key is missing"));
-      setIsLoading(false);
       return;
     }
 
@@ -82,19 +73,16 @@ const StreamConnectionProvider = ({
       let isInterrupted = false;
 
       // Connect user to Stream
-      setIsLoading(true);
       const connectPromise = chat
         .connectUser({ id: user.id, name: user.username }, data.data.token)
         .then(() => {
           if (isInterrupted) return;
           console.log("Stream client connected successfully");
           setStreamClient(chat);
-          setIsLoading(false);
         })
         .catch((err) => {
           console.error("Stream connection error:", err);
           setError(err);
-          setIsLoading(false);
         });
 
       return () => {
@@ -110,15 +98,14 @@ const StreamConnectionProvider = ({
     } catch (err: any) {
       console.error("Error setting up Stream client:", err);
       setError(err);
-      setIsLoading(false);
     }
-  }, [user, data, apiLoading, apiError]);
+  }, [user?.id, user?.username, data?.data?.token, apiError]);
 
   return (
     <StreamConnectionContext.Provider
       value={{
         streamClient,
-        isLoading: isLoading || apiLoading,
+        isLoading,
         error,
       }}
     >

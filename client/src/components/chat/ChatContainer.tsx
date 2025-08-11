@@ -21,11 +21,12 @@ import {
 
 import "stream-chat-react/dist/css/v2/index.css";
 import { useStreamConnection } from "@/providers/streamconnection.provider";
+import clsx from "clsx";
 
 const ChatContainer = () => {
   const { streamClient, isLoading, error } = useStreamConnection();
 
-  if (isLoading) {
+  if (isLoading || !streamClient) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-64px)]">
         <div className="text-center">
@@ -47,29 +48,31 @@ const ChatContainer = () => {
     );
   }
 
-  if (!streamClient) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-64px)]">
-        <div className="text-center">
-          <p className="text-xl font-bold">Chat client not initialized</p>
-          <p className="mt-2">Please try refreshing the page</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <Chat client={streamClient}>
-      <ChannelList />
-      <Channel>
-        <Window>
-          <ChannelHeader />
-          <MessageList />
-          <MessageInput />
-        </Window>
-        <Thread />
-      </Channel>
-    </Chat>
+    <div className=" h-screen">
+      <Chat client={streamClient} theme='str-chat__theme-custom'>
+        <section data-sidebar={"close"} className="grid  gap-4 data-[sidebar=close]:md:grid-cols-[1fr_3fr] data-[sidebar=open]:md:grid-cols-[1fr_3fr_1.5fr] h-full">
+
+          <ChannelList
+            setActiveChannelOnMount={false}
+            List={ChatSidebar}
+            sendChannelsToList={true}
+          />
+
+          <Channel>
+            <Window>
+              <ChannelHeader />
+              <MessageList />
+              <MessageInput />
+            </Window>
+            <Thread />
+          </Channel>
+          {/* <div>
+            sdf
+          </div> */}
+        </section>
+      </Chat>
+    </div>
   );
 };
 
