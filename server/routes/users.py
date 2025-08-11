@@ -12,6 +12,6 @@ async def signup(user: UserSignup):
 async def login(user: UserLogin):
     return await login_user(user)
 
-@router.get("/users")
+@router.get("/get_users")
 async def getusers(search:str):
     return await get_user(search)

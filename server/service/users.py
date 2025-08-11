@@ -45,6 +45,13 @@ async def get_user(search: str) -> dict:
             match_stage["$or"] = [
                 {"username": {"$regex": str(search), "$options": "i"}},
             ]
+        else:
+             return {
+            "success": True,
+            "message": "Users retrieved successfully",
+            "data": [],
+            "total_items": 0
+        }
 
         # Query Mongo
         pipeline = [

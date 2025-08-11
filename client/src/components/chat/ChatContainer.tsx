@@ -57,15 +57,34 @@ const ChatContainer = () => {
             setActiveChannelOnMount={false}
             List={ChatSidebar}
             sendChannelsToList={true}
+            filters={{
+              members: { $in: [streamClient.userID || ''] }
+            }}
+          // sort={{ last_message_at: -1 }}
+          // options={{
+          //   state: true,
+          //   watch: true,
+          //   presence: true,
+          //   limit: 10,
+          // }}
           />
 
           <Channel>
+
             <Window>
-              <ChannelHeader />
-              <MessageList />
-              <MessageInput />
+              <div className="flex flex-col justify-between h-full">
+                <ChannelHeader />
+                <div className="px-4 py-3 overflow-y-auto flex flex-col gap-4 h-full">
+                  <MessageList />
+                </div>
+
+                <MessageInput />
+              </div>
+
             </Window>
-            <Thread />
+
+
+            {/* <Thread /> */}
           </Channel>
           {/* <div>
             sdf

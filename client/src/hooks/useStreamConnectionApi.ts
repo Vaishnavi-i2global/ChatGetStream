@@ -17,3 +17,13 @@ export const useStreamConnectionApi = (user: User) => {
 
   return { data, isLoading, error };
 };
+
+
+export const useGetUsers = (search: string) => {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["users", search],
+    queryFn: () => axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users/get_users?search=${search}`),
+  });
+
+  return { data, isLoading, error };
+};
