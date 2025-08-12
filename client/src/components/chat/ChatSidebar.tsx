@@ -31,6 +31,7 @@ export default function ChatSidebar({ loadedChannels }: ChannelListMessengerProp
         if (!client) return;
 
         try {
+            // want to chagne adding user and creating channel thing through backend later
             const exisitngUsers = await client.queryUsers({
                 id: { $eq: userId }
             });
