@@ -68,6 +68,7 @@ const ChatContainer = () => {
               watch: true,
               presence: true,
               limit: 10,
+              message_limit: 15
             }}
           />
 
@@ -75,7 +76,7 @@ const ChatContainer = () => {
             <Window>
               <div className="flex flex-col justify-between h-full">
                 <CustomChannelHeader />
-                <div className="flex-1 overflow-y-auto p-4 bg-gray-50 -h-[calc(100vh-150px)] max-h-[calc(100vh-150px)]">
+                <div className="flex-1 bg-gray-50 h-[calc(100vh-150px)] max-h-[calc(100vh-150px)]">
                   <CustomMessageList />
                   {/* <MessageList /> */}
                 </div>
