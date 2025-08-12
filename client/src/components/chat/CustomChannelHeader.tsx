@@ -32,19 +32,19 @@ const CustomChannelHeader = () => {
         client.on("user.presence.changed", handlePresenceChange);
 
         // Optional: Listen for connection state changes
-        client.on("connection.changed", (event: any) => {
-            if (event.online === false && event.was_online) {
-                setIsOnline(false);
-            }
-        });
+        // client.on("connection.changed", (event: any) => {
+        //     if (event.online === false && event.was_online) {
+        //         setIsOnline(false);
+        //     }
+        // });
 
         return () => {
             client.off("user.presence.changed", handlePresenceChange);
-            client.off("connection.changed", (event: any) => {
-                if (event.online === false && event.was_online) {
-                    setIsOnline(false);
-                }
-            });
+            // client.off("connection.changed", (event: any) => {
+            //     if (event.online === false && event.was_online) {
+            //         setIsOnline(false);
+            //     }
+            // });
         };
     }, [channel, otherUserId]);
 
