@@ -82,7 +82,32 @@ const CustomMessageList = () => {
     //         // init();
     //     }
     // }, [isFirstMessage, channel]);
+    useEffect(() => {
+        if (!channel) return;
 
+        const handleNewMessage = async (event: any) => {
+            // console.log("mark channel:", event)
+            // Don't mark read for messages sent by the current user
+            if (event.user?.id === channel._client?.userID) return;
+            // console.log("mark channel:2", document.visibilityState)
+            // Only mark as read if the window is active (optional check)
+            // if (document.visibilityState === 'visible') {
+            // console.log("mark channel:3")
+            try {
+                await channel.markRead();
+                console.log("Marked channel as read");
+            } catch (err) {
+                console.error("Error marking as read:", err);
+            }
+            // }
+        };
+
+        channel.on("message.new", handleNewMessage);
+
+        return () => {
+            channel.off("message.new", handleNewMessage);
+        };
+    }, [channel]);
 
     // Load more messages with throttling
     const loadMoreMessages = useCallback(async () => {

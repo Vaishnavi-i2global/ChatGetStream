@@ -249,6 +249,7 @@ function ChannelItem({
     onClick: () => void;
 }) {
     const [latestMessage, setLatestMessage] = useState<any>(null);
+    const [unreadCount, setUnreadCount] = useState(channel.countUnread());
 
     const otherUser = Object.values(channel.state.members || {}).find(
         (m) => m.user?.id !== channel._client.userID
@@ -267,22 +268,45 @@ function ChannelItem({
             setLatestMessage(sorted[0]);
         };
 
-        updateLatestMessage();
-
-        const handleNew = (e: Event) => {
-            console.log(e, channel.state.messages, "new message")
-            e.message && updateLatestMessage()
+        const updateUnread = () => {
+            setUnreadCount(channel.countUnread());
         };
-        const handleUpdate = (e: Event) => e.message && updateLatestMessage();
 
+        // Initialize state
+        updateLatestMessage();
+        updateUnread();
+
+        // Event: New message
+        const handleNew = (event: any) => {
+            updateLatestMessage();
+            if (event.user?.id !== channel._client.userID) {
+                updateUnread();
+            }
+        };
+
+        // Event: Message updated
+        const handleUpdate = () => updateLatestMessage();
+
+        // Event: Message deleted
+        const handleDelete = () => updateLatestMessage();
+
+        // Event: Mark messages as read
+        const handleRead = () => updateUnread();
+
+        // Register listeners
         channel.on("message.new", handleNew);
         channel.on("message.updated", handleUpdate);
-        channel.on("message.deleted", updateLatestMessage);
+        channel.on("message.deleted", handleDelete);
+        channel.on("message.read", handleRead);
+        channel.on("notification.mark_read", handleRead);
 
+        // Cleanup
         return () => {
             channel.off("message.new", handleNew);
             channel.off("message.updated", handleUpdate);
-            channel.off("message.deleted", updateLatestMessage);
+            channel.off("message.deleted", handleDelete);
+            channel.off("message.read", handleRead);
+            channel.off("notification.mark_read", handleRead);
         };
     }, [channel]);
 
@@ -303,8 +327,10 @@ function ChannelItem({
                 <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white">
                     {channelName.charAt(0)}
                 </div>
-                {channel.countUnread() > 0 && (
-                    <div className="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-full"></div>
+                {unreadCount > 0 && (
+                    <div className="absolute -top-1 -right-1 min-w-[1.2rem] h-4 px-1 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">
+                        {unreadCount}
+                    </div>
                 )}
             </div>
             <div className="ml-3 flex-1">
@@ -319,3 +345,5 @@ function ChannelItem({
         </div>
     );
 }
+
+;
