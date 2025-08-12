@@ -32,7 +32,7 @@ import EmptyChannelState from "./EmptyChannelState";
 
 const ChatContainer = () => {
   const { streamClient, isLoading, error, activeChannel } = useStreamConnection();
-  console.log(activeChannel, "SDFSDF");
+
   if (isLoading || !streamClient) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-64px)]">
@@ -66,7 +66,7 @@ const ChatContainer = () => {
             filters={{
               members: { $in: [streamClient.userID || ''] }
             }}
-            // sort={{ last_message_at: -1 }}
+            sort={{ last_message_at: -1 }}
             options={{
               state: true,
               watch: true,
