@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from models.users import UserSignup, UserLogin, UserResponse
 from service.channel import post_channel
 
 router = APIRouter()
