@@ -109,18 +109,18 @@ const CustomMessageInput = () => {
                 }
             }
             // Optimistic message
-            const optimisticMessage: LocalMessage = {
-                id: `temp-${Date.now()}`,
-                cid: channel.cid,
-                type: "regular",
-                text: text.trim(),
-                user: channel._client.user,
-                created_at: new Date(),
-                updated_at: new Date(),
-                deleted_at: null,
-                pinned_at: null,
-                status: "sending",
-            };
+            // const optimisticMessage: LocalMessage = {
+            //     id: `temp-${Date.now()}`,
+            //     cid: channel.cid,
+            //     type: "regular",
+            //     text: text.trim(),
+            //     user: channel._client.user,
+            //     created_at: new Date(),
+            //     updated_at: new Date(),
+            //     deleted_at: null,
+            //     pinned_at: null,
+            //     status: "sending",
+            // };
 
             // channel.state.addMessageSorted(optimisticMessage, true); // force insert into local state
 
@@ -131,7 +131,7 @@ const CustomMessageInput = () => {
             });
             if (messages?.length === 0) {
                 setIsFirstMessage(true);
-                channel.state.addMessageSorted(optimisticMessage, true)
+                // channel.state.addMessageSorted(optimisticMessage, true)
             } else {
                 setIsFirstMessage(false);
             }

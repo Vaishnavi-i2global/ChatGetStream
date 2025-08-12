@@ -5,7 +5,7 @@ import Image from "next/image";
 import { format } from "date-fns";
 import { ChannelListMessengerProps, useChatContext } from "stream-chat-react";
 import { Channel as StreamChannel } from "stream-chat";
-import { useGetUsers } from "@/hooks/useStreamConnectionApi";
+import { useGetUsers, useCreateChannel } from "@/hooks/useStreamConnectionApi";
 import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 
@@ -22,6 +22,7 @@ export default function ChatSidebar({ loadedChannels }: ChannelListMessengerProp
     const [search, setSearch] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const { data: usersResponse, isLoading, error } = useGetUsers(search);
+    const { createChannel, isLoading: isCreatingChannel } = useCreateChannel();
 
     // Extract users from the response
     const users = usersResponse?.data?.data?.filter((user: User) => user.id !== client?.userID) || [];
@@ -31,28 +32,21 @@ export default function ChatSidebar({ loadedChannels }: ChannelListMessengerProp
         if (!client) return;
 
         try {
-            // want to chagne adding user and creating channel thing through backend later
-            const exisitngUsers = await client.queryUsers({
-                id: { $eq: userId }
-            });
-            if (exisitngUsers.users.length === 0) {
-                await client.upsertUser({
-                    id: userId,
-                    name: username,
-                    role: 'user',
-                    image: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`,
-                    // email: email
-                });
-            }
-            // 
-            // Create a new channel
-            const channel = client.channel('messaging', {
-                members: [client.userID || '', userId],
+            // Create channel through backend API
+            const response = await createChannel({
+                sender_id: client.userID || '',
+                receiver_id: userId,
+                created_by: client.userID || ''
             });
 
+            // Get the channel ID from the response
+            const channelId = response.data.channel_id;
+
+            // Get or create the channel in the frontend client
+            const channel = client.channel('messaging', channelId);
+
             // Initialize the channel
-            await channel.create();
-            // await channel.watch();
+            await channel.watch();
 
             // Set as active channel
             setActiveChannel(channel);

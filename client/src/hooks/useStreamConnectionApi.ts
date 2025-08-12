@@ -27,3 +27,21 @@ export const useGetUsers = (search: string) => {
 
   return { data, isLoading, error };
 };
+
+export const useCreateChannel = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (payload: { sender_id: string; receiver_id: string; created_by: string }) =>
+      axios.post(`${process.env.NEXT_PUBLIC_API_URL}/chat/create_channel`, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['channels'] });
+    },
+  });
+
+  return {
+    createChannel: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    error: mutation.error
+  };
+};

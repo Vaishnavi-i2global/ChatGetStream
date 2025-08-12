@@ -6,14 +6,14 @@ server_client = StreamChat(api_key="u66j6en37tv4", api_secret="5hezjeytwyhwnhpkk
 
 async def post_channel(payload: dict):
     try:
-        student_id = payload.get("student_id")
-        tutor_id = payload.get("tutor_id")
+        sender_id = payload.get("sender_id")
+        receiver_id = payload.get("receiver_id")
         created_by = payload.get("created_by")
 
-        if not student_id or not tutor_id or not created_by:
+        if not sender_id or not receiver_id or not created_by:
             raise HTTPException(status_code=400, detail="Missing required fields")
 
-        members = [student_id, tutor_id]
+        members = [sender_id, receiver_id]
 
         # Check if a distinct channel with these members already exists
         filters = {
