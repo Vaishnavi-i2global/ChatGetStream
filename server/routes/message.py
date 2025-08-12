@@ -1,11 +1,15 @@
 
-from service.message import get_message
-from fastapi import APIRouter, Form, UploadFile, File
-from typing import List, Optional
-
+from fastapi import APIRouter
+from typing import Optional
+from service.message import get_my_messages_with_attachments_or_links
 
 router = APIRouter()
 
 @router.get("/")
-def getmessage(chennal_id: str, user_id: Optional[str] = None):
-    return get_message({"channel_id": chennal_id, "user_id": user_id})
+def getmessage(channel_id: str, user_id: str, channel_type: Optional[str] = "messaging"):
+    payload = {
+        "channel_id": channel_id,   
+        "user_id": user_id,
+        "channel_type": channel_type    
+    }
+    return get_my_messages_with_attachments_or_links(payload)
