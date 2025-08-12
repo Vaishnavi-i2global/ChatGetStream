@@ -51,6 +51,7 @@ export default function ChatSidebar({ loadedChannels }: ChannelListMessengerProp
 
             // Initialize the channel
             await channel.create();
+            // await channel.watch();
 
             // Set as active channel
             setActiveChannel(channel);

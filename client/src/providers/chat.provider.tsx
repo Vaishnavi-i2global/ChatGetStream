@@ -29,6 +29,9 @@ interface ChatContextType {
     activeConversation: Conversation | null;
     setActiveConversation: (conversation: Conversation) => void;
     sendMessage: (content: string) => void;
+    setIsFirstMessage: React.Dispatch<React.SetStateAction<boolean>>
+    isFirstMessage: boolean
+
 }
 
 // Create dummy data
@@ -128,6 +131,7 @@ export function ChatProvider({ children }: React.PropsWithChildren) {
     const { user } = useAuth();
     const [conversations, setConversations] = useState<Conversation[]>(dummyConversations);
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
+    const [isFirstMessage, setIsFirstMessage] = useState(false)
 
     // Send message function
     const sendMessage = (content: string) => {
@@ -163,6 +167,8 @@ export function ChatProvider({ children }: React.PropsWithChildren) {
                 activeConversation,
                 setActiveConversation,
                 sendMessage,
+                setIsFirstMessage,
+                isFirstMessage
             }}
         >
             {children}

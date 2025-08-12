@@ -12,6 +12,8 @@ import {
   Channel,
   ChannelList,
   Window,
+  MessageInput,
+  MessageList,
 } from "stream-chat-react";
 
 import "stream-chat-react/dist/css/v2/index.css";
@@ -75,8 +77,10 @@ const ChatContainer = () => {
                 <CustomChannelHeader />
                 <div className="flex-1 overflow-y-auto p-4 bg-gray-50 -h-[calc(100vh-150px)] max-h-[calc(100vh-150px)]">
                   <CustomMessageList />
+                  {/* <MessageList /> */}
                 </div>
                 <CustomMessageInput />
+                {/* <MessageInput /> */}
               </div>
             </Window>
           </Channel>

@@ -6,16 +6,68 @@ import {
 } from "stream-chat-react";
 import { format } from "date-fns";
 import CustomMessage from "./CustomMessage";
+import { useChat } from "@/providers/chat.provider";
+import { useRouter } from "next/navigation";
 
 const CustomMessageList = () => {
     const { messages, channel } = useChannelStateContext();
+    const { isFirstMessage } = useChat()
+    const router = useRouter()
     const [prevChannelId, setPrevChannelId] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    // useEffect(() => {
+    //     if (isFirstMessage) {
+    //         console.log(isFirstMessage, channel, "asfddf");
+    //         // router.refresh()
+    //         router.replace("/chat")
+    //         // router.prefetch(`/chat`)
+    //         const fetchInitialMessages = async () => {
 
+    //             // setIsInitialLoad(true);
+    //             // setPrevChannelId(channel.id);
+
+    //             try {
+    //                 // Fetch latest messages
+    //                 // await channel.query({
+    //                 //     messages: { limit: 25 },
+    //                 //     watch: true,
+    //                 // });
+    //                 await channel.watch({ messages: { limit: 10 } });
+    //                 console.log(channel.state.messages, messages); // Now populated
+
+    //                 // Alternative: Use channel.watch() which also fetches messages
+    //                 // await channel.watch();
+
+    //             } catch (error) {
+    //                 console.error('Error fetching initial messages:', error);
+    //             } finally {
+    //                 // setIsInitialLoad(false);
+    //             }
+    //         };
+
+    //         fetchInitialMessages();
+    //         // const init = async () => {
+    //         //     // Scroll instantly
+    //         //     if (messagesEndRef.current) {
+    //         //         messagesEndRef.current.scrollIntoView({ behavior: "auto" });
+    //         //     }
+
+    //         //     try {
+    //         //         // Await channel watch
+    //         //         await channel.watch({ state: true });
+    //         //         console.log(isFirstMessage, "asfddf");
+    //         //     } catch (error) {
+    //         //         console.error("Error watching channel:", error);
+    //         //     }
+    //         // };
+
+    //         // init();
+    //     }
+    // }, [isFirstMessage, channel]);
 
     // 1️⃣ Jump instantly when channel changes
     useEffect(() => {

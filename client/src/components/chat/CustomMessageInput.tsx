@@ -3,11 +3,14 @@
 import React, { useState, useRef, KeyboardEvent } from "react";
 import { useChannelStateContext } from "stream-chat-react";
 import { Send, Smile, Paperclip, X, Image as ImageIcon, File } from "lucide-react";
+import { LocalMessage } from "stream-chat";
+import { useChat } from "@/providers/chat.provider";
 
 const CustomMessageInput = () => {
     const [text, setText] = useState("");
+    const { setIsFirstMessage } = useChat()
     const [fileUploads, setFileUploads] = useState<Array<{ id: string; file: File; preview?: string }>>([]);
-    const { channel } = useChannelStateContext();
+    const { channel, messages } = useChannelStateContext();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -105,12 +108,35 @@ const CustomMessageInput = () => {
                     console.error('Error uploading file:', error);
                 }
             }
+            // Optimistic message
+            const optimisticMessage: LocalMessage = {
+                id: `temp-${Date.now()}`,
+                cid: channel.cid,
+                type: "regular",
+                text: text.trim(),
+                user: channel._client.user,
+                created_at: new Date(),
+                updated_at: new Date(),
+                deleted_at: null,
+                pinned_at: null,
+                status: "sending",
+            };
+
+            // channel.state.addMessageSorted(optimisticMessage, true); // force insert into local state
 
             // Use the channel's sendMessage method directly
             await channel.sendMessage({
                 text: text.trim(),
                 attachments: attachments.length > 0 ? attachments : undefined,
             });
+            if (messages?.length === 0) {
+                setIsFirstMessage(true);
+                channel.state.addMessageSorted(optimisticMessage, true)
+            } else {
+                setIsFirstMessage(false);
+            }
+
+            await channel.watch();
 
             // Clear the input
             setText("");
@@ -199,12 +225,6 @@ const CustomMessageInput = () => {
 
                 <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
                     <div className="flex items-center px-3">
-                        <button
-                            type="button"
-                            className="text-gray-500 hover:text-gray-700"
-                        >
-                            <Smile size={20} />
-                        </button>
 
                         <input
                             type="file"
