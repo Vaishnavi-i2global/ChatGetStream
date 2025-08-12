@@ -124,7 +124,7 @@ const CustomMessageInput = () => {
 
             // channel.state.addMessageSorted(optimisticMessage, true); // force insert into local state
 
-            // Use the channel's sendMessage method directly
+            // Use the channel's sendMessage method directly  
             await channel.sendMessage({
                 text: text.trim(),
                 attachments: attachments.length > 0 ? attachments : undefined,

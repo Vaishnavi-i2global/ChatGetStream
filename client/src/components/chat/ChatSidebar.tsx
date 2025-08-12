@@ -8,6 +8,7 @@ import { Channel as StreamChannel } from "stream-chat";
 import { useGetUsers, useCreateChannel } from "@/hooks/useStreamConnectionApi";
 import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
+import { useStreamConnection } from "@/providers/streamconnection.provider";
 
 interface User {
     id: string;
@@ -19,6 +20,7 @@ interface User {
 export default function ChatSidebar({ loadedChannels }: ChannelListMessengerProps) {
     const { client, setActiveChannel, channel: activeChannel } = useChatContext();
 
+    const { setActiveChannel: setCustomActiveChannel } = useStreamConnection();
     const [search, setSearch] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const { data: usersResponse, isLoading, error } = useGetUsers(search);
@@ -50,6 +52,7 @@ export default function ChatSidebar({ loadedChannels }: ChannelListMessengerProp
 
             // Set as active channel
             setActiveChannel(channel);
+            setCustomActiveChannel(channel);
             setIsSearching(false);
             setSearch("");
         } catch (error) {
@@ -152,7 +155,10 @@ export default function ChatSidebar({ loadedChannels }: ChannelListMessengerProp
                                 key={channel.id}
                                 channel={channel}
                                 isActive={activeChannel?.id === channel.id}
-                                onClick={() => setActiveChannel(channel)}
+                                onClick={() => {
+                                    setActiveChannel(channel);
+                                    setCustomActiveChannel(channel);
+                                }}
                             />
                         ))
                     ) : (

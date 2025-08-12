@@ -14,6 +14,9 @@ import {
   Window,
   MessageInput,
   MessageList,
+  useChannelStateContext,
+  EmptyStateIndicator,
+  useChatContext,
 } from "stream-chat-react";
 
 import "stream-chat-react/dist/css/v2/index.css";
@@ -25,10 +28,11 @@ import CustomChannelHeader from "./CustomChannelHeader";
 import CustomMessageList from "./CustomMessageList";
 import CustomMessageInput from "./CustomMessageInput";
 import CustomMessage from "./CustomMessage";
+import EmptyChannelState from "./EmptyChannelState";
 
 const ChatContainer = () => {
-  const { streamClient, isLoading, error } = useStreamConnection();
-
+  const { streamClient, isLoading, error, activeChannel } = useStreamConnection();
+  console.log(activeChannel, "SDFSDF");
   if (isLoading || !streamClient) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-64px)]">
@@ -72,25 +76,33 @@ const ChatContainer = () => {
             }}
           />
 
-          <Channel>
-            <Window>
-              <div className="flex flex-col justify-between h-full">
-                <CustomChannelHeader />
-                <div className="flex-1 bg-gray-50 h-[calc(100vh-150px)] max-h-[calc(100vh-150px)]">
-                  <CustomMessageList />
-                  {/* <MessageList /> */}
+          {
+            !activeChannel ? (
+              <EmptyChannelState />
+            ) : (<Channel>
+              <Window>
+                <div className="flex flex-col justify-between h-full">
+                  <CustomChannelHeader />
+                  <div className="flex-1 bg-gray-50 h-[calc(100vh-150px)] max-h-[calc(100vh-150px)]">
+                    <CustomMessageList />
+                    {/* <MessageList /> */}
+                  </div>
+                  <CustomMessageInput />
+                  {/* <MessageInput /> */}
                 </div>
-                <CustomMessageInput />
-                {/* <MessageInput /> */}
-              </div>
-            </Window>
-          </Channel>
+              </Window>
+            </Channel>
+            )
+          }
+
+
+
           {/* <div>
             sdf
           </div> */}
         </section>
       </Chat>
-    </div>
+    </div >
   );
 };
 

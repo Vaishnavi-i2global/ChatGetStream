@@ -28,7 +28,7 @@ const CustomMessageList = () => {
 
     // Message pagination settings
     const MESSAGE_LIMIT = 15;
-    const SCROLL_THRESHOLD = 150; // pixels from top to trigger loading
+    const SCROLL_THRESHOLD = 500; // pixels from top to trigger loading
 
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -99,7 +99,6 @@ const CustomMessageList = () => {
 
             // Use the loadMore function from ChannelActionContext
             const hasMoreMessages = await contextLoadMore(MESSAGE_LIMIT);
-
             // Update hasMore state based on the result
             setHasMore(!!hasMoreMessages);
 

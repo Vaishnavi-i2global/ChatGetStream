@@ -3,18 +3,22 @@ import React, { useEffect, useState, createContext, useContext } from "react";
 import { useAuth } from "./auth.provider";
 import { useStreamConnectionApi } from "@/hooks/useStreamConnectionApi";
 import { User } from "./auth.provider";
-import { StreamChat } from "stream-chat";
+import { Channel, StreamChat } from "stream-chat";
 
 interface StreamConnectionContextType {
   streamClient: StreamChat | null;
   isLoading: boolean;
   error: Error | null;
+  activeChannel: Channel | null;
+  setActiveChannel: (channel: Channel | null) => void;
 }
 
 const initialContext: StreamConnectionContextType = {
   streamClient: null,
   isLoading: true,
   error: null,
+  activeChannel: null,
+  setActiveChannel: () => { },
 };
 
 const StreamConnectionContext =
@@ -28,6 +32,7 @@ const StreamConnectionProvider = ({
   const { user } = useAuth();
   const [streamClient, setStreamClient] = useState<StreamChat | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
 
   // Only fetch token if we have a user
   const {
@@ -107,6 +112,8 @@ const StreamConnectionProvider = ({
         streamClient,
         isLoading,
         error,
+        activeChannel,
+        setActiveChannel,
       }}
     >
       {children}
