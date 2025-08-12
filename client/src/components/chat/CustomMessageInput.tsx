@@ -5,6 +5,8 @@ import { useChannelStateContext } from "stream-chat-react";
 import { Send, Smile, Paperclip, X, Image as ImageIcon, File } from "lucide-react";
 import { LocalMessage } from "stream-chat";
 import { useChat } from "@/providers/chat.provider";
+import { useTypingEvents } from "@/hooks/useTypingEvents";
+import TypingIndicator from "./TypingIndicator";
 
 const CustomMessageInput = () => {
     const [text, setText] = useState("");
@@ -14,9 +16,16 @@ const CustomMessageInput = () => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Use our custom typing events hook
+    const { handleTyping, stopTyping } = useTypingEvents(channel);
+
     // Handle text changes
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setText(e.target.value);
+        const newText = e.target.value;
+        setText(newText);
+
+        // Handle typing events
+        handleTyping(newText);
     };
 
     // Handle key down events - Enter to submit, Shift+Enter for new line
@@ -142,6 +151,9 @@ const CustomMessageInput = () => {
             setText("");
             setFileUploads([]);
 
+            // Stop typing when message is sent
+            stopTyping();
+
             // Focus the textarea after sending
             if (textareaRef.current) {
                 textareaRef.current.focus();
@@ -151,25 +163,7 @@ const CustomMessageInput = () => {
         }
     };
 
-    // Check if users are typing
-    const renderTypingIndicator = () => {
-        const typing = channel?.state?.typing || {};
-        const typingUsers = Object.values(typing).filter(
-            ({ user }: any) => user?.id !== channel?._client?.userID
-        );
 
-        if (!typingUsers.length) return null;
-
-        return (
-            <div className="text-xs text-gray-500 h-5 mt-1">
-                {typingUsers.length === 1 ? (
-                    <span>{typingUsers[0].user?.name || 'Someone'} is typing...</span>
-                ) : (
-                    <span>Several people are typing...</span>
-                )}
-            </div>
-        );
-    };
 
     // Render file previews
     const renderFilePreviews = () => {
@@ -220,7 +214,7 @@ const CustomMessageInput = () => {
     return (
         <div className="border-t border-gray-200 p-4">
             <form onSubmit={handleSubmit} className="relative">
-                {renderTypingIndicator()}
+                <TypingIndicator className="mt-1" />
                 {renderFilePreviews()}
 
                 <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
