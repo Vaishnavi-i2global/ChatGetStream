@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import ChatWindow from "./ChatWindow";
 import ChatSidebar from "./ChatSidebar";
 import type {
   User,
@@ -11,17 +10,21 @@ import type {
 import {
   Chat,
   Channel,
-  ChannelHeader,
   ChannelList,
+  Window,
   MessageInput,
   MessageList,
-  Thread,
-  Window,
 } from "stream-chat-react";
 
 import "stream-chat-react/dist/css/v2/index.css";
 import { useStreamConnection } from "@/providers/streamconnection.provider";
 import clsx from "clsx";
+
+// Import custom components
+import CustomChannelHeader from "./CustomChannelHeader";
+import CustomMessageList from "./CustomMessageList";
+import CustomMessageInput from "./CustomMessageInput";
+import CustomMessage from "./CustomMessage";
 
 const ChatContainer = () => {
   const { streamClient, isLoading, error } = useStreamConnection();
@@ -49,23 +52,37 @@ const ChatContainer = () => {
   }
 
   return (
-    <div className=" h-screen">
-      <Chat client={streamClient} theme='str-chat__theme-custom'>
-        <section data-sidebar={"close"} className="grid  gap-4 data-[sidebar=close]:md:grid-cols-[1fr_3fr] data-[sidebar=open]:md:grid-cols-[1fr_3fr_1.5fr] h-full">
-
+    <div className="h-screen">
+      <Chat client={streamClient} theme="str-chat__theme-custom">
+        <section data-sidebar={"close"} className="grid gap-4 data-[sidebar=close]:md:grid-cols-[1fr_3fr] data-[sidebar=open]:md:grid-cols-[1fr_3fr_1.5fr] h-full">
           <ChannelList
             setActiveChannelOnMount={false}
             List={ChatSidebar}
             sendChannelsToList={true}
+            filters={{
+              members: { $in: [streamClient.userID || ''] }
+            }}
+            // sort={{ last_message_at: -1 }}
+            options={{
+              state: true,
+              watch: true,
+              presence: true,
+              limit: 10,
+            }}
           />
 
           <Channel>
             <Window>
-              <ChannelHeader />
-              <MessageList />
-              <MessageInput />
+              <div className="flex flex-col justify-between h-full">
+                <CustomChannelHeader />
+                <div className="flex-1 overflow-y-auto p-4 bg-gray-50 -h-[calc(100vh-150px)] max-h-[calc(100vh-150px)]">
+                  <CustomMessageList />
+                  {/* <MessageList /> */}
+                </div>
+                <CustomMessageInput />
+                {/* <MessageInput /> */}
+              </div>
             </Window>
-            <Thread />
           </Channel>
           {/* <div>
             sdf
