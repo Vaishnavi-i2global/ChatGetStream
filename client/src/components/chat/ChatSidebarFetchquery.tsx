@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { format } from "date-fns";
 import Image from "next/image";
 import { Search } from "lucide-react";
+import { throttle } from "lodash";
 import {
     useChatContext,
-    ChannelListMessengerProps,
 } from "stream-chat-react";
-import { Channel as StreamChannel, Event } from "stream-chat";
+import { Channel as StreamChannel, Event, ChannelFilters, ChannelOptions, ChannelSort } from "stream-chat";
 
 import { useGetUsers, useCreateChannel } from "@/hooks/useStreamConnectionApi";
 import { useStreamConnection } from "@/providers/streamconnection.provider";
@@ -20,15 +20,168 @@ interface User {
     profile_pic: string | null;
 }
 
-export default function ChatSidebar({ loadedChannels }: ChannelListMessengerProps) {
+// Simple props interface for ChatSidebar
+interface ChatSidebarProps {
+    loadedChannels?: StreamChannel[]; // This prop is now effectively unused in the main ChatSidebar logic
+}
+
+export default function ChatSidebar({ loadedChannels }: ChatSidebarProps) {
     const { client, setActiveChannel, channel: activeChannel } = useChatContext();
     const { setActiveChannel: setCustomActiveChannel } = useStreamConnection();
 
     const [search, setSearch] = useState("");
     const [isSearching, setIsSearching] = useState(false);
 
+    // Channel query states
+    const [channels, setChannels] = useState<StreamChannel[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<Error | null>(null);
+    const [offset, setOffset] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const LIMIT = 8; // Limit for fetching channels
+
+    // Reference to the container for scroll detection
+    const containerRef = useRef<HTMLDivElement>(null);
+
     const { data: usersResponse, isLoading } = useGetUsers(search);
     const { createChannel } = useCreateChannel();
+
+    // Scroll threshold in pixels
+    const SCROLL_THRESHOLD = 200;
+
+    // Track if we're currently loading to prevent duplicate calls
+    const isLoadingRef = useRef(false);
+
+    // Function to fetch channels directly
+    const queryChannels = useCallback(async (loadMore = false) => {
+        // Prevent duplicate calls
+        if (!client) return;
+        if (isLoadingRef.current) return;
+        if (loading && !loadMore) return;
+        if (loadMore && !hasMore) return;
+
+        try {
+            isLoadingRef.current = true;
+            setLoading(true);
+
+            // Define filters, sort, and options
+            const filters: ChannelFilters = {
+                members: { $in: [client.userID || ''] }
+            };
+
+            const sort: ChannelSort = { last_message_at: -1 };
+
+            const options: ChannelOptions = {
+                limit: LIMIT,
+                offset: loadMore ? offset : 0,
+                message_limit: 15,
+                state: true,
+                watch: true,
+                presence: true,
+            };
+
+            console.log(`Fetching channels: offset=${options.offset}, limit=${options.limit}`);
+
+            // Query channels from the client
+            const response = await client.queryChannels(filters, sort, options);
+            console.log(`Received ${response.length} channels`);
+
+            // Update state based on whether we're loading more or initial load
+            if (loadMore) {
+                // Check for duplicates to avoid adding the same channel twice
+                const existingIds = new Set(channels.map(ch => ch.id));
+                const newChannels = response.filter(ch => !existingIds.has(ch.id));
+
+                if (newChannels.length > 0) {
+                    setChannels(prev => [...prev, ...newChannels]);
+                    setOffset(prev => prev + newChannels.length);
+                }
+            } else {
+                setChannels(response);
+                setOffset(response.length);
+            }
+
+            // Check if we have more channels to load
+            setHasMore(response.length === LIMIT);
+
+        } catch (err) {
+            console.error('Error fetching channels:', err);
+            setError(err instanceof Error ? err : new Error('Unknown error fetching channels'));
+        } finally {
+            setLoading(false);
+            // Add a small delay before allowing new requests to prevent rapid consecutive calls
+            setTimeout(() => {
+                isLoadingRef.current = false;
+            }, 300);
+        }
+    }, [client, offset, loading, hasMore, channels, LIMIT]);
+
+    // Use a ref to track initial load
+    const initialLoadRef = useRef(false);
+
+    // Load initial channels only once
+    useEffect(() => {
+        if (client && !initialLoadRef.current) {
+            initialLoadRef.current = true;
+            queryChannels();
+        }
+    }, [client, queryChannels]);
+
+    // Track if we're currently loading more to prevent multiple calls
+    const isLoadingMoreRef = useRef(false);
+
+    // Create a throttled scroll handler to prevent excessive calls
+    const handleScroll = useCallback(
+        throttle(() => {
+            // Prevent loading if:
+            // - No container ref
+            // - Already loading
+            // - No more channels to load
+            // - User is searching
+            // - Already in the process of loading more
+            if (!containerRef.current || loading || !hasMore || isSearching || isLoadingMoreRef.current) return;
+
+            const container = containerRef.current;
+            const { scrollTop, scrollHeight, clientHeight } = container;
+
+            // Calculate distance from bottom
+            const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+            // Load more channels when user scrolls near the bottom
+            if (distanceFromBottom < SCROLL_THRESHOLD) {
+                console.log(`Loading more channels. Distance from bottom: ${distanceFromBottom}px`);
+
+                // Set flag to prevent multiple calls
+                isLoadingMoreRef.current = true;
+
+                // Load more channels
+                queryChannels(true).finally(() => {
+                    // Reset flag when done, regardless of success or failure
+                    setTimeout(() => {
+                        isLoadingMoreRef.current = false;
+                    }, 500); // Add a small delay to prevent rapid consecutive calls
+                });
+            }
+        }, 500), // Increased throttle to 500ms for better performance
+        [loading, hasMore, isSearching, queryChannels, SCROLL_THRESHOLD]
+    );
+
+    // Add scroll event listener
+    useEffect(() => {
+        const container = containerRef.current;
+        if (container) {
+            // Add passive event listener for better scroll performance
+            container.addEventListener('scroll', handleScroll, { passive: true });
+        }
+
+        return () => {
+            if (container) {
+                container.removeEventListener('scroll', handleScroll);
+                // Make sure to cancel any pending throttled executions
+                handleScroll.cancel();
+            }
+        };
+    }, [handleScroll]);
 
     const users: User[] =
         usersResponse?.data?.data?.filter((u: User) => u.id !== client?.userID) || [];
@@ -61,7 +214,7 @@ export default function ChatSidebar({ loadedChannels }: ChannelListMessengerProp
     return (
         <div className="w-full h-full bg-white border-r border-gray-200">
             {/* Header */}
-            <SidebarHeader totalChats={loadedChannels?.length || 0} />
+            <SidebarHeader totalChats={channels?.length || 0} />
 
             {/* Search */}
             <SearchBox
@@ -73,23 +226,63 @@ export default function ChatSidebar({ loadedChannels }: ChannelListMessengerProp
             />
 
             {/* List */}
-            <div className="overflow-y-auto h-[calc(100%-170px)]">
+            <div
+                ref={containerRef}
+                className="overflow-y-auto max-h-[calc(100vh-170px)]"
+            >
                 {isSearching ? (
                     <SearchResults
                         users={users}
                         isLoading={isLoading}
-                        loadedChannels={loadedChannels}
+                        loadedChannels={channels} // Use our directly fetched channels
                         onUserSelect={handleCreateChannel}
                     />
                 ) : (
-                    <ChannelList
-                        channels={loadedChannels}
-                        activeChannelId={activeChannel?.id}
-                        onChannelSelect={(ch) => {
-                            setActiveChannel(ch);
-                            setCustomActiveChannel(ch);
-                        }}
-                    />
+                    <>
+                        {/* Initial loading state */}
+                        {loading && channels.length === 0 && (
+                            <div className="flex justify-center items-center h-40">
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                            </div>
+                        )}
+
+                        {/* Error state */}
+                        {error && (
+                            <div className="p-4 text-center text-red-500">
+                                <p>Error loading channels</p>
+                                <button
+                                    onClick={() => queryChannels()}
+                                    className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                >
+                                    Retry
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Channel list */}
+                        <ChannelList
+                            channels={channels} // Use our directly fetched channels
+                            activeChannelId={activeChannel?.id}
+                            onChannelSelect={(ch) => {
+                                setActiveChannel(ch);
+                                setCustomActiveChannel(ch);
+                            }}
+                        />
+
+                        {/* Loading more indicator */}
+                        {loading && channels.length > 0 && (
+                            <div className="flex justify-center py-4">
+                                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+                            </div>
+                        )}
+
+                        {/* End of list indicator */}
+                        {!hasMore && channels.length > 0 && !loading && (
+                            <div className="text-center py-4 text-gray-500 text-sm">
+                                No more channels to load
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>

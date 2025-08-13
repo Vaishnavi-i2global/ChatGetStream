@@ -71,7 +71,7 @@ const ChatContainer = () => {
               state: true,
               watch: true,
               presence: true,
-              limit: 10,
+              limit: 50,
               message_limit: 15
             }}
           />
