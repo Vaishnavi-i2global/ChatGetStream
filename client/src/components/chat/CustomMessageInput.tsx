@@ -3,7 +3,7 @@
 import React, { useState, useRef, KeyboardEvent } from "react";
 import { useChannelStateContext } from "stream-chat-react";
 import { Send, Smile, Paperclip, X, Image as ImageIcon, File } from "lucide-react";
-import { LocalMessage } from "stream-chat";
+import { LocalMessage, MessageData } from "stream-chat";
 import { useChat } from "@/providers/chat.provider";
 import { useTypingEvents } from "@/hooks/useTypingEvents";
 import TypingIndicator from "./TypingIndicator";
@@ -133,11 +133,30 @@ const CustomMessageInput = () => {
 
             // channel.state.addMessageSorted(optimisticMessage, true); // force insert into local state
 
-            // Use the channel's sendMessage method directly  
-            await channel.sendMessage({
+            // Create a message payload with custom data
+            // Now TypeScript knows about our custom fields thanks to the type declaration
+            const messageData: Partial<MessageData> = {
+
                 text: text.trim(),
                 attachments: attachments.length > 0 ? attachments : undefined,
-            });
+                // These custom properties will be accessible in your message object
+                customType: 'text',
+                metadata: { foo: 'bar' },
+                // You can also use more complex custom data structures
+                order_details: {
+                    order_id: '12345',
+                    status: 'pending',
+                    items: [
+                        { name: 'Product 1', quantity: 2 },
+                        { name: 'Product 2', quantity: 1 }
+                    ]
+                },
+                is_special_message: true,
+                priority: 'high'
+            };
+
+            // Use the channel's sendMessage method with our custom data
+            await channel.sendMessage(messageData);
             if (messages?.length === 0) {
                 setIsFirstMessage(true);
                 // channel.state.addMessageSorted(optimisticMessage, true)
